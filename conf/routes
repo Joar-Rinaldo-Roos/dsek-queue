@@ -11,9 +11,11 @@ GET     /message                    controllers.AsyncController.message
 
 GET     /queue                      controllers.QueueController.readAll
 
-GET     /queue/:aId                 controllers.QueueController.readById(aId: Long)
+GET     /queue/:aId                 controllers.QueueController.read(aId: Long)
 
-PUT     /queue/done/:aId            controllers.QueueController.delete(aId: Long)
+DELETE  /queue/delete               controllers.QueueController.deleteAllDone
+
+PUT     /queue/done/:aId            controllers.QueueController.markDone(aId: Long)
 
 POST    /queue/add                  controllers.QueueController.add
 
