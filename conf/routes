@@ -12,13 +12,14 @@ GET     /cookies                    controllers.QueueController.testCookies
 
 GET     /queue/read                 controllers.QueueController.readAll
 
-GET     /queue/read/:aOrderId       controllers.QueueController.read(aOrderId: Int)
+GET     /queue/read/:aUserId       controllers.QueueController.read(aUserId: Int)
 
 
 # DELETE  /queue/delete               controllers.QueueController.deleteAllDone
 
 # PUT     /queue/done/:aOrderId       controllers.QueueController.markDone(aOrderId: Int)
 
+# +nocsrf
 POST    /queue/add                  controllers.QueueController.add
 
 GET     /queue/yourorder            controllers.QueueController.readOwnOrder()

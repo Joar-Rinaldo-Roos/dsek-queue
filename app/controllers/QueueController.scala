@@ -27,7 +27,7 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
       val aUserId = QueueUser.getCounter
       users += QueueUser(aUserId)
 
-      Ok("Welcome!").withCookies(Cookie("userId", aUserId.toString, Option(180)))
+      Ok("Welcome!").withCookies(Cookie("userId", aUserId.toString, Option(1800)))
     }
   }
 
@@ -40,15 +40,16 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
     if (users.isEmpty) {
       NoContent
     } else {
-      Ok(Json.toJson(users))
+      Ok(Json.toJson(users.map(u => u.viewOrders)))
     }
   }
 
   // curl localhost:9000/queue/0
   def read(aId: Int): Action[AnyContent] = Action {
+    println(users)
     val foundEntry = users.find(_.userId == aId)
     if (foundEntry.isDefined) {
-      Ok(Json.toJson(foundEntry.get))
+      Ok(Json.toJson(foundEntry.get.viewOrders))
     } else {
       NoContent
     }
@@ -87,10 +88,6 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
 
   // curl -v -d '{"order": "some new order"}' -H 'Content-Type: application/json' -X POST localhost:9000/queue/add
   def add(): Action[AnyContent] = Action { implicit request =>
-    Ok("Adding")
-
-    /*
-
     val content = request.body
     val jsonObject = content.asJson
     val aQueueEntry: Option[dtoOrder] = jsonObject.flatMap(Json.fromJson[dtoOrder](_).asOpt)
@@ -110,18 +107,11 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
         }
       case None => BadRequest
     }
-
-     */
   }
 
   def getUserByCookie(aCookie: Option[Cookie]): Option[QueueUser] = {
     if (aCookie.isDefined) {
-      val aUser = users.find(_.userId == aCookie.get.value.toInt)
-      if (aUser.isDefined) {
-        Some(aUser.get)
-      } else {
-        None
-      }
+      users.find(_.userId == aCookie.get.value.toInt)
     } else {
       None
     }
