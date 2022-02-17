@@ -90,7 +90,9 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
   def add(): Action[AnyContent] = Action { implicit request =>
     val content = request.body
     val jsonObject = content.asJson
-    val aQueueEntry: Option[dtoOrder] = jsonObject.flatMap(Json.fromJson[dtoOrder](_).asOpt)
+
+    // flattens jsonObject and transforms its contents  it into a json from the dtoOrder format
+    val aQueueEntry: Option[dtoOrder] = jsonObject.flatMap(x => Json.fromJson[dtoOrder](x).asOpt)
 
     aQueueEntry match {
       case Some(aOrder) =>
