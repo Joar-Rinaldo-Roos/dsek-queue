@@ -12,7 +12,9 @@ import scala.collection.mutable.ArrayBuffer
 @Singleton
 class QueueController @Inject()(val controllerComponents: ControllerComponents) extends BaseController {
   private val users = new mutable.ArrayBuffer[QueueUser]()
-  private val allOrders = new mutable.ArrayBuffer[QueueOrder]()
+  private def allOrders: Vector[QueueOrder] =
+    users.flatMap(_.viewOrders).toVector
+
   // private val queue = new mutable.ArrayBuffer[QueueEntry]()
 
   implicit val userJson: OFormat[QueueUser] = Json.format[QueueUser]
@@ -40,13 +42,12 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
     if (users.isEmpty) {
       NoContent
     } else {
-      Ok(Json.toJson(users.map(u => u.viewOrders)))
+      Ok(Json.toJson(allOrders))
     }
   }
 
   // curl localhost:9000/queue/0
   def read(aId: Int): Action[AnyContent] = Action {
-    println(users)
     val foundEntry = users.find(_.userId == aId)
     if (foundEntry.isDefined) {
       Ok(Json.toJson(foundEntry.get.viewOrders))
@@ -64,15 +65,14 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
     }
   }
 
-  /*
   // curl -X PUT localhost:9000/queue/done/0
-  def markDone(aId: Int): Action[AnyContent] = Action {
-    val foundEntry = queue.find(_.orderId == aId)
-    if (foundEntry.isDefined) {
-      val asDone = foundEntry.get.copy(isDone = true)
-      queue -= foundEntry.get
-      queue += asDone
-      Accepted(Json.toJson(asDone))
+  def markDone(aOrderId: Int): Action[AnyContent] = Action {
+    val foundUser = users.find(u => u.viewOrders.exists(o => o.orderId == aOrderId))
+    println(foundUser)
+    if (foundUser.isDefined) {
+      val foundOrder = foundUser.get.viewOrders.find(_.orderId == aOrderId).get
+      foundUser.get.markOrderDone(foundOrder)
+      Accepted(Json.toJson(foundUser.get.viewOrders))
     } else {
       NotFound
     }
@@ -80,11 +80,10 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
 
   // curl -X DELETE localhost:9000/queue/delete
   def deleteAllDone(): Action[AnyContent] = Action {
-    queue.filterInPlace(_.isDone == false)
+    users.foreach(_.removeDone())
     Accepted
   }
 
-   */
 
   // curl -v -d '{"order": "some new order"}' -H 'Content-Type: application/json' -X POST localhost:9000/queue/add
   def add(): Action[AnyContent] = Action { implicit request =>
@@ -99,12 +98,9 @@ class QueueController @Inject()(val controllerComponents: ControllerComponents) 
         getUserByCookie(request.cookies.get("userId")) match {
           case Some(aUser) =>
             val toBeAdded = QueueOrder(aUser, aOrder.content)
-
             aUser.addOrder(toBeAdded)
-            allOrders += toBeAdded
 
             Created(Json.toJson(toBeAdded))
-
           case None => BadRequest
         }
       case None => BadRequest

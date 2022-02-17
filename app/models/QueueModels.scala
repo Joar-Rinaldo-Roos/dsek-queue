@@ -17,9 +17,17 @@ object QueueOrder {
 case class QueueUser(userId: Int) {
   private val orders = new mutable.ArrayBuffer[QueueOrder]()
 
-  def viewOrders: mutable.ArrayBuffer[QueueOrder] = orders
+  def viewOrders: Vector[QueueOrder] = orders.toVector
 
   def addOrder(aOrder: QueueOrder): Unit = orders += aOrder
+
+  def markOrderDone(aOrder: QueueOrder): Unit = {
+    orders -= aOrder
+    orders += aOrder.copy(isDone = true)
+  }
+
+  def removeDone(): Unit = orders.filterInPlace(_.isDone == false)
+
 }
 
 object QueueUser {
